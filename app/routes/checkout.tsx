@@ -20,19 +20,15 @@ import {
   Check,
   Package
 } from "lucide-react";
+import { useCart } from "../contexts/CartContext";
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const { cartItems, getTotalPrice, clearCart } = useCart();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Mock cart items
-  const cartItems = [
-    { id: 1, name: "iPhone 15 Pro", price: 999, quantity: 1, image: "https://picsum.photos/60/60?random=1" },
-    { id: 2, name: "AirPods Pro", price: 249, quantity: 1, image: "https://picsum.photos/60/60?random=2" }
-  ];
-
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = getTotalPrice();
   const shipping = 15;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
@@ -46,6 +42,7 @@ export default function Checkout() {
   const handlePlaceOrder = async () => {
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
+    clearCart(); // Clear cart after successful order
     navigate('/order-confirmation');
   };
 

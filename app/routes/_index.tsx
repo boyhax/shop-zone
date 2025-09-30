@@ -4,7 +4,8 @@ import type { Translations } from "../contexts/LanguageContext";
 import * as React from "react";
 import { useState } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
-import { useSearchParams, Link } from "react-router";
+import { useCart } from "../contexts/CartContext";
+import { Link, useSearchParams } from "react-router";
 
 
 
@@ -319,9 +320,8 @@ const fetchCustomComponents = async () => {
 
 export default function Home() {
   const { t, language, setLanguage, isRTL } = useLanguage();
+  const { cartItems, addToCart, removeFromCart, getTotalPrice, isCartOpen, setIsCartOpen } = useCart();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [cartItems, setCartItems] = useState<Array<{id: number, name: string, price: number, quantity: number}>>([]);
   const [customComponents, setCustomComponents] = useState<any[]>([]);
   const [isLoadingComponents, setIsLoadingComponents] = useState(true);
   const [currentMediaIndex, setCurrentMediaIndex] = useState<{[key: number]: number}>({});
@@ -378,26 +378,6 @@ export default function Home() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Add to cart functionality
-  const addToCart = (product: typeof allProducts[0]) => {
-    const existingItem = cartItems.find(item => item.id === product.id);
-    if (existingItem) {
-      setCartItems(cartItems.map(item => 
-        item.id === product.id ? {...item, quantity: item.quantity + 1} : item
-      ));
-    } else {
-      setCartItems([...cartItems, {id: product.id, name: product.name, price: product.price, quantity: 1}]);
-    }
-  };
-
-  const removeFromCart = (id: number) => {
-    setCartItems(cartItems.filter(item => item.id !== id));
-  };
-
-  const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
 
   const filteredProducts = allProducts.filter(product => {
     const matchesCategory = selectedCategory === "All" || product.category === selectedCategory;
@@ -814,7 +794,13 @@ export default function Home() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        addToCart(product);
+                        addToCart({
+                          id: product.id,
+                          name: product.name,
+                          price: product.price,
+                          image: product.media[0]?.url,
+                          category: product.category
+                        });
                       }}
                       className="w-full bg-white/90 backdrop-blur-sm text-gray-900 border-0 rounded-xl py-2.5 px-4 cursor-pointer font-semibold text-sm transition-all duration-200 hover:bg-white hover:scale-105 shadow-lg border border-white/20"
                     >
@@ -836,7 +822,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* Cart Sheet */}
+      {/* Cart Sheet - updated to use context */}
       {isCartOpen && (
         <div className={`fixed inset-0 bg-black/50 z-50 flex ${isRTL ? 'justify-start' : 'justify-end'}`}>
           <div className={`bg-white w-96 h-full ${isRTL ? 'shadow-2xl shadow-black/20' : 'shadow-2xl shadow-black/20'} flex flex-col animate-slide-in`}>
@@ -878,11 +864,13 @@ export default function Home() {
               <div className="p-6 border-t border-gray-200">
                 <div className="flex justify-between text-xl font-bold mb-4 text-gray-800">
                   <span>{t('total', translations)}</span>
-                  <span>${getTotalPrice()}</span>
+                  <span>${getTotalPrice().toFixed(2)}</span>
                 </div>
-                <button className="w-full bg-gradient-to-br from-green-500 to-emerald-600 text-white border-0 rounded-xl py-4 cursor-pointer font-bold text-lg shadow-lg shadow-green-300 hover:shadow-xl transition-all duration-200">
-                  {t('checkout', translations)}
-                </button>
+                <Link to="/checkout" onClick={() => setIsCartOpen(false)}>
+                  <button className="w-full bg-gradient-to-br from-green-500 to-emerald-600 text-white border-0 rounded-xl py-4 cursor-pointer font-bold text-lg shadow-lg shadow-green-300 hover:shadow-xl transition-all duration-200">
+                    {t('checkout', translations)}
+                  </button>
+                </Link>
               </div>
             )}
           </div>

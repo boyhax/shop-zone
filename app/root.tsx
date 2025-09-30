@@ -9,6 +9,7 @@ import {
 
 import type { Route } from "./+types/root";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { CartProvider } from "./contexts/CartContext";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -73,7 +74,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <LanguageProvider>
-      <Outlet />
+      <CartProvider>
+        <Outlet />
+      </CartProvider>
     </LanguageProvider>
   );
 }
